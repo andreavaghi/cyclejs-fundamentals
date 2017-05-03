@@ -1,11 +1,13 @@
-import { run } from '@cycle/run';
-import { makeDOMDriver } from '@cycle/dom';
-import { App } from './app';
+import xs from 'xstream';
 
-const main = App;
+// Logic (functional)
+xs.periodic(1000)
+  .map(i => `Seconds elapsed ${i}`)
 
-const drivers = {
-  DOM: makeDOMDriver('#app')
-};
-
-run(main, drivers);
+  // Effects (imperative)
+  .subscribe({
+    next: (text) => {
+      const container = document.querySelector('#app');
+      container.textContent = text;
+    }
+  });
