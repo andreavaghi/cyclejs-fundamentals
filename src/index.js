@@ -1,31 +1,49 @@
 import xs from 'xstream';
 import { run } from '@cycle/run';
-import { button, p, label, div, makeDOMDriver } from '@cycle/dom';
+import { button, h1, h4, a, div, makeDOMDriver } from '@cycle/dom';
+import { makeHTTPDriver } from '@cycle/http';
+
+// DOM read effect: button clicked
+// HTTP write effect: request sent
+// HTTP read effect: response received
+// DOM write effect: data displayed
 
 function main(sources) {
-  const decrementClick$ = sources.DOM.select('.decrement').events('click');
-  const incrementClick$ = sources.DOM.select('.increment').events('click');
-  const decrementAction$ = decrementClick$.map(e => -1);
-  const incrementAction$ = incrementClick$.map(e => +1);
+  const clickEvent$ = sources.DOM
+    .select('.first').events('click');
 
-  const number$ = xs.merge(xs.of(10), decrementAction$, incrementAction$)
-    .fold((prev, curr) => prev + curr, 0);
+  const request$ = clickEvent$.map(() => {
+    return {
+      url: 'http://jsonplaceholder.typicode.com/users/1',
+      category: 'user',
+    };
+  });
+
+  const response$ = sources.HTTP
+    .select('user')
+    .flatten();
+
+  const firstUser$ = response$.map(response => response.body)
+    .startWith(null);
 
   return {
-    DOM: number$.map(number =>
+    DOM: firstUser$.map(firstUser =>
       div([
-        button('.decrement', 'Decrement'),
-        button('.increment', 'Increment'),
-        p([
-          label(number)
+        button('.first', 'Get first user'),
+        firstUser === null ? null : div('.user-details', [
+          h1('.user-name', firstUser.name),
+          h4('.user-email', firstUser.email),
+          a('.user-website', { attrs: { href: firstUser.website } }, firstUser.website)
         ])
       ])
-    )
+    ),
+    HTTP: request$
   };
 }
 
 const drivers = {
   DOM: makeDOMDriver('#app'),
+  HTTP: makeHTTPDriver()
 };
 
 run(main, drivers);
