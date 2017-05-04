@@ -1,16 +1,24 @@
+import xs from 'xstream';
 import { run } from '@cycle/run';
-import { label, input, h1, hr, div, makeDOMDriver } from '@cycle/dom';
+import { button, p, label, div, makeDOMDriver } from '@cycle/dom';
 
 function main(sources) {
-  const inputEv$ = sources.DOM.select('.field').events('input');
-  const name$ = inputEv$.map(e => e.target.value).startWith('');
+  const decrementClick$ = sources.DOM.select('.decrement').events('click');
+  const incrementClick$ = sources.DOM.select('.increment').events('click');
+  const decrementAction$ = decrementClick$.map(e => -1);
+  const incrementAction$ = incrementClick$.map(e => +1);
+
+  const number$ = xs.merge(xs.of(10), decrementAction$, incrementAction$)
+    .fold((prev, curr) => prev + curr, 0);
+
   return {
-    DOM: name$.map(name =>
+    DOM: number$.map(number =>
       div([
-        label('Name: '),
-        input('.field', { type: 'text' }),
-        hr(),
-        h1(`Hello ${name}!`)
+        button('.decrement', 'Decrement'),
+        button('.increment', 'Increment'),
+        p([
+          label(number)
+        ])
       ])
     )
   };
