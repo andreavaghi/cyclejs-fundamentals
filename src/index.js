@@ -49,34 +49,36 @@ function main(sources) {
 // sink: output (write) effects
 
 // Effects (imperative)
-function DOMDriver(obj$) {
-  function createElement(obj) {
-    const element = document.createElement(obj.tagName);
-    obj.children
-      .filter(c => typeof c === 'object')
-      .map(createElement)
-      .forEach(c => element.appendChild(c));
-    obj.children
-      .filter(c => typeof c === 'string')
-      .forEach(c => element.innerHTML += c);
-    return element;
-  }
+function makeDOMDriver(mountSelector) {
+  return function DOMDriver(obj$) {
+    function createElement(obj) {
+      const element = document.createElement(obj.tagName);
+      obj.children
+        .filter(c => typeof c === 'object')
+        .map(createElement)
+        .forEach(c => element.appendChild(c));
+      obj.children
+        .filter(c => typeof c === 'string')
+        .forEach(c => element.innerHTML += c);
+      return element;
+    }
 
-  obj$.subscribe({
-    next: (obj) => {
-      const container = document.querySelector('#app');
-      container.innerHTML = '';
-      const element = createElement(obj);
-      container.appendChild(element);
-    }
-  });
-  const DOMSource = {
-    selectEvents: function (tagName, eventType) {
-      return fromEvent(document, eventType)
-        .filter(e => e.target.tagName === tagName.toUpperCase());
-    }
+    obj$.subscribe({
+      next: (obj) => {
+        const container = document.querySelector(mountSelector);
+        container.innerHTML = '';
+        const element = createElement(obj);
+        container.appendChild(element);
+      }
+    });
+    const DOMSource = {
+      selectEvents: function (tagName, eventType) {
+        return fromEvent(document, eventType)
+          .filter(e => e.target.tagName === tagName.toUpperCase());
+      }
+    };
+    return DOMSource;
   };
-  return DOMSource;
 }
 
 function consoleLogDriver(msg$) {
@@ -86,7 +88,7 @@ function consoleLogDriver(msg$) {
 }
 
 const drivers = {
-  DOM: DOMDriver,
+  DOM: makeDOMDriver('#app'),
   Log: consoleLogDriver
 };
 
