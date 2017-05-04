@@ -4,9 +4,9 @@ import { run } from '@cycle/run';
 
 // Logic (functional)
 function main(sources) {
-  const click$ = sources.DOM;
+  const mouseover$ = sources.DOM.selectEvents('span', 'mouseover');
   const sinks = {
-    DOM: click$
+    DOM: mouseover$
       .startWith(null)
       .map(() =>
         xs.periodic(1000)
@@ -53,7 +53,12 @@ function DOMDriver(obj$) {
       container.appendChild(element);
     }
   });
-  const DOMSource = fromEvent(document, 'click');
+  const DOMSource = {
+    selectEvents: function (tagName, eventType) {
+      return fromEvent(document, eventType)
+        .filter(e => e.target.tagName === tagName.toUpperCase());
+    }
+  };
   return DOMSource;
 }
 
