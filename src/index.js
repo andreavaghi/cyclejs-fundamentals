@@ -2,8 +2,12 @@ import xs from 'xstream';
 
 // Logic (functional)
 function main() {
-  return xs.periodic(1000)
-    .map(i => `Seconds elapsed ${i}`);
+  return {
+    DOM: xs.periodic(1000)
+      .map(i => `Seconds elapsed ${i}`),
+    Log: xs.periodic(2000)
+      .map(i => 2 * i),
+  };
 }
 
 // Effects (imperative)
@@ -22,6 +26,6 @@ function consoleLogEffect(msg$) {
   });
 }
 
-const sink = main();
-consoleLogEffect(sink);
-DOMeffect(sink);
+const sinks = main();
+DOMeffect(sinks.DOM);
+consoleLogEffect(sinks.Log);
