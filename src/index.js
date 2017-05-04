@@ -2,9 +2,9 @@ import xs from 'xstream';
 import fromEvent from 'xstream/extra/fromEvent';
 
 // Logic (functional)
-function main(DOMSource) {
-  const click$ = DOMSource;
-  return {
+function main(sources) {
+  const click$ = sources.DOM;
+  const sinks = {
     DOM: click$
       .startWith(null)
       .map(() =>
@@ -14,6 +14,7 @@ function main(DOMSource) {
     Log: xs.periodic(2000)
       .map(i => 2 * i),
   };
+  return sinks;
 }
 
 // source: input (read) effects
@@ -37,19 +38,16 @@ function consoleLogDriver(msg$) {
   });
 }
 
-// bProxy = ...
-// a = f(bProxy)
-// b = g(a)
-// bProxy.imitate(b)
-
 function run(mainFn, drivers) {
-  const proxyDOMSource = xs.create();
-  const sinks = mainFn(proxyDOMSource);
-  const DOMSource = drivers.DOM(sinks.DOM);
-  proxyDOMSource.imitate(DOMSource);
-  // Object.keys(drivers).forEach(key => {
-  //   drivers[key](sinks[key]);
-  // });
+  const proxySources = {};
+  Object.keys(drivers).forEach(key => {
+    proxySources[key] = xs.create();
+  });
+  const sinks = mainFn(proxySources);
+  Object.keys(drivers).forEach(key => {
+    const source = drivers[key](sinks[key]);
+    proxySources[key].imitate(source);
+  });
 }
 
 const drivers = {
