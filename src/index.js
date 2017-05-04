@@ -11,7 +11,7 @@ function main() {
 }
 
 // Effects (imperative)
-function DOMeffect(text$) {
+function DOMDriver(text$) {
   text$.subscribe({
     next: (text) => {
       const container = document.querySelector('#app');
@@ -20,12 +20,22 @@ function DOMeffect(text$) {
   });
 }
 
-function consoleLogEffect(msg$) {
+function consoleLogDriver(msg$) {
   msg$.subscribe({
     next: msg => console.log(msg)
   });
 }
 
-const sinks = main();
-DOMeffect(sinks.DOM);
-consoleLogEffect(sinks.Log);
+function run(mainFn, drivers) {
+  const sinks = mainFn();
+  Object.keys(drivers).forEach(key => {
+    drivers[key](sinks[key]);
+  });
+}
+
+const drivers = {
+  DOM: DOMDriver,
+  Log: consoleLogDriver
+};
+
+run(main, drivers);
