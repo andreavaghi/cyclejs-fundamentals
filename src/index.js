@@ -32,7 +32,7 @@ function view(state$) {
   );
 }
 
-function main(sources) {
+function LabeledSlider(sources) {
   const change$ = intent(sources.DOM);
   const state$ = model(change$, sources.props);
   const vtree$ = view(state$);
@@ -42,15 +42,19 @@ function main(sources) {
   };
 }
 
-const drivers = {
-  DOM: makeDOMDriver('#app'),
-  props: () => xs.of({
+function main(sources) {
+  const props$ = xs.of({
     label: 'Weight',
     unit: 'kg',
     min: 40,
     max: 150,
     init: 70,
   })
+  return LabeledSlider({ DOM: sources.DOM, props: props$ });
+}
+
+const drivers = {
+  DOM: makeDOMDriver('#app'),
 };
 
 run(main, drivers);
