@@ -1,48 +1,42 @@
 import xs from 'xstream';
+import concat from 'xstream/extra/concat'
 import { run } from '@cycle/run';
 import { div, input, label, h2, makeDOMDriver } from '@cycle/dom';
 
-// DOM read effect: detect slider change
-// recalculate BMI
-// DOM write effect: display BMI
-
-function intent(DOMSource) {
-  const changeWeight$ = DOMSource.select('.weight').events('input')
+function intent(DOMSources) {
+  return DOMSources.select('.slider').events('input')
     .map(e => e.target.value);
-  const changeHeight$ = DOMSource.select('.height').events('input')
-    .map(e => e.target.value);
-  return { changeWeight$, changeHeight$ };
 }
 
-function model(changeWeight$, changeHeight$) {
-  return xs.combine(changeWeight$.startWith(70), changeHeight$.startWith(170))
-    .map(([weight, height]) => {
-      const heightMeters = height * 0.01;
-      const bmi = Math.round(weight / (heightMeters * heightMeters));
-      return { bmi, weight, height };
+function model(newValue$, props$) {
+  const initialValue$ = props$.map(props => props.init);
+  const value$ = concat(initialValue$, newValue$);
+  return xs.combine(value$, props$)
+    .map(([value, props]) => {
+      return {
+        label: props.label,
+        unit: props.unit,
+        min: props.min,
+        max: props.max,
+        value: value
+      };
     });
 }
 
 function view(state$) {
   return state$.map(state =>
-    div([
-      div([
-        label(`Weight: ${state.weight}kg`),
-        input('.weight', { attrs: { type: 'range', min: 40, max: 150, value: state.weight } })
-      ]),
-      div([
-        label(`Height: ${state.height}cm`),
-        input('.height', { attrs: { type: 'range', min: 140, max: 220, value: state.height } })
-      ]),
-      h2(`BMI is ${state.bmi}`)
+    div('.labeled-slider', [
+      label('.label', `${state.label}: ${state.value}${state.unit}`),
+      input('.slider', { attrs: { type: 'range', min: state.min, max: state.max, value: state.value } })
     ])
   );
 }
 
 function main(sources) {
-  const { changeWeight$, changeHeight$ } = intent(sources.DOM);
-  const state$ = model(changeWeight$, changeHeight$);
+  const change$ = intent(sources.DOM);
+  const state$ = model(change$, sources.props);
   const vtree$ = view(state$);
+
   return {
     DOM: vtree$
   };
@@ -50,6 +44,13 @@ function main(sources) {
 
 const drivers = {
   DOM: makeDOMDriver('#app'),
+  props: () => xs.of({
+    label: 'Weight',
+    unit: 'kg',
+    min: 40,
+    max: 150,
+    init: 70,
+  })
 };
 
 run(main, drivers);
