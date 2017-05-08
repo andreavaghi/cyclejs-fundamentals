@@ -43,14 +43,44 @@ function LabeledSlider(sources) {
 }
 
 function main(sources) {
-  const props$ = xs.of({
+  const weightProps$ = xs.of({
     label: 'Weight',
     unit: 'kg',
     min: 40,
     max: 150,
     init: 70,
-  })
-  return LabeledSlider({ DOM: sources.DOM, props: props$ });
+  });
+  const weightSinks = LabeledSlider({ DOM: sources.DOM.select('.weight'), props: weightProps$ });
+  const weightVTree$ = weightSinks.DOM.map(vtree => {
+    console.log(vtree.data);
+    vtree.sel += ' weight';
+    return vtree;
+  });
+
+  const heightProps$ = xs.of({
+    label: 'Height',
+    unit: 'cm',
+    min: 140,
+    max: 220,
+    init: 170,
+  });
+  const heightSinks = LabeledSlider({ DOM: sources.DOM.select('.height'), props: heightProps$ });
+  const heightVTree$ = heightSinks.DOM.map(vtree => {
+    vtree.sel += ' height';
+    return vtree;
+  });
+
+  const vtree$ = xs.combine(weightVTree$, heightVTree$)
+    .map(([weightVTree, heightVTree]) =>
+      div([
+        weightVTree,
+        heightVTree,
+      ])
+    );
+
+  return {
+    DOM: vtree$
+  };
 }
 
 const drivers = {
