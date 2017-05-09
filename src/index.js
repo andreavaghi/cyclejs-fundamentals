@@ -10,18 +10,19 @@ function intent(DOMSources) {
 }
 
 function model(newValue$, props$) {
-  const initialValue$ = props$.map(props => props.init);
-  const value$ = concat(initialValue$, newValue$);
-  return xs.combine(value$, props$)
-    .map(([value, props]) => {
-      return {
+  return props$
+    .map(props => newValue$
+      .map(value => ({
         label: props.label,
         unit: props.unit,
         min: props.min,
-        max: props.max,
-        value: value
-      };
-    });
+        value: value,
+        max: props.max
+      }))
+      .startWith(props)
+    )
+    .flatten()
+    .remember();
 }
 
 function view(state$) {
@@ -39,7 +40,8 @@ function LabeledSlider(sources) {
   const vtree$ = view(state$);
 
   return {
-    DOM: vtree$
+    DOM: vtree$,
+    value: state$.map(state => state.value)
   };
 }
 
@@ -53,26 +55,36 @@ function main(sources) {
     unit: 'kg',
     min: 40,
     max: 150,
-    init: 70,
+    value: 70,
   });
   const weightSinks = IsolatedLabeledSlider({ DOM: sources.DOM, props: weightProps$ });
   const weightVTree$ = weightSinks.DOM;
+  const weightValue$ = weightSinks.value;
 
   const heightProps$ = xs.of({
     label: 'Height',
     unit: 'cm',
     min: 140,
     max: 220,
-    init: 170,
+    value: 170,
   });
   const heightSinks = IsolatedLabeledSlider({ DOM: sources.DOM, props: heightProps$ });
   const heightVTree$ = heightSinks.DOM;
+  const heightValue$ = heightSinks.value;
 
-  const vtree$ = xs.combine(weightVTree$, heightVTree$)
-    .map(([weightVTree, heightVTree]) =>
+  const bmi$ = xs.combine(weightValue$, heightValue$)
+    .map(([weight, height]) => {
+      const heightMeters = height * 0.01;
+      return Math.round(weight / (heightMeters * heightMeters));
+    })
+    .remember();
+
+  const vtree$ = xs.combine(bmi$, weightVTree$, heightVTree$)
+    .map(([bmi, weightVTree, heightVTree]) =>
       div([
         weightVTree,
         heightVTree,
+        h2(`BMI is ${bmi}`)
       ])
     );
 
