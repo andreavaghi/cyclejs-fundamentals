@@ -2,6 +2,7 @@ import xs from 'xstream';
 import concat from 'xstream/extra/concat'
 import { run } from '@cycle/run';
 import { div, input, label, h2, makeDOMDriver } from '@cycle/dom';
+import isolate from '@cycle/isolate';
 
 function intent(DOMSources) {
   return DOMSources.select('.slider').events('input')
@@ -42,6 +43,10 @@ function LabeledSlider(sources) {
   };
 }
 
+function IsolatedLabeledSlider(sources) {
+  return isolate(LabeledSlider)(sources);
+}
+
 function main(sources) {
   const weightProps$ = xs.of({
     label: 'Weight',
@@ -50,12 +55,8 @@ function main(sources) {
     max: 150,
     init: 70,
   });
-  const weightSinks = LabeledSlider({ DOM: sources.DOM.select('.weight'), props: weightProps$ });
-  const weightVTree$ = weightSinks.DOM.map(vtree => {
-    console.log(vtree.data);
-    vtree.sel += ' weight';
-    return vtree;
-  });
+  const weightSinks = IsolatedLabeledSlider({ DOM: sources.DOM, props: weightProps$ });
+  const weightVTree$ = weightSinks.DOM;
 
   const heightProps$ = xs.of({
     label: 'Height',
@@ -64,11 +65,8 @@ function main(sources) {
     max: 220,
     init: 170,
   });
-  const heightSinks = LabeledSlider({ DOM: sources.DOM.select('.height'), props: heightProps$ });
-  const heightVTree$ = heightSinks.DOM.map(vtree => {
-    vtree.sel += ' height';
-    return vtree;
-  });
+  const heightSinks = IsolatedLabeledSlider({ DOM: sources.DOM, props: heightProps$ });
+  const heightVTree$ = heightSinks.DOM;
 
   const vtree$ = xs.combine(weightVTree$, heightVTree$)
     .map(([weightVTree, heightVTree]) =>
