@@ -1,5 +1,5 @@
 import xs from 'xstream';
-import concat from 'xstream/extra/concat'
+import concat from 'xstream/extra/concat';
 import { run } from '@cycle/run';
 import { div, input, label, h2, makeDOMDriver } from '@cycle/dom';
 import isolate from '@cycle/isolate';
