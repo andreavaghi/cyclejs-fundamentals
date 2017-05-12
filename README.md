@@ -1,6 +1,6 @@
 # Cycle.js Fundamentals
 
-This is a repository for the code of the Cycle.js Fundamentals code of [egghead.io](https://egghead.io/courses/cycle-js-fundamentals), divided by lessons.
+This is a repository for the code of the Cycle.js Fundamentals course of [egghead.io](https://egghead.io/courses/cycle-js-fundamentals), divided by lessons.
 
 Since the code proposed in the video is quite out of date, i have tried to update it with the last versions of [Cycle.js packages](https://github.com/cyclejs/cyclejs#packages) (@cycle/run, @cycle/dom, @cycle/http, @cycle/isolate) and using [xstream](https://github.com/staltz/xstream) instead of [RxJS](https://github.com/ReactiveX/RxJS).
 
